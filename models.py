@@ -1,28 +1,28 @@
 from database import db
+from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
-# Association table for many-to-many relationship (sharing)
-user_tasks = db.Table(
-    'user_tasks',
-    db.Column('user_id', db.Integer, db.ForeignKey('users.id'), primary_key=True),
-    db.Column('task_id', db.Integer, db.ForeignKey('tasks.id'), primary_key=True)
+
+# Many-to-many user <-> group
+user_groups = db.Table(
+    "user_groups",
+    db.Column("user_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
+    db.Column("group_id", db.Integer, db.ForeignKey("groups.id"), primary_key=True),
 )
 
-class User(db.Model):
+
+class User(db.Model, UserMixin):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
 
-    # Tasks this user owns
-    owned_tasks = db.relationship("Task", backref="owner", lazy=True)
-
-    # Tasks shared with this user (many-to-many)
-    shared_tasks = db.relationship(
-        "Task",
-        secondary=user_tasks,
-        back_populates="shared_with_users"
+    groups = db.relationship(
+        "Group",
+        secondary=user_groups,
+        back_populates="members"
     )
 
     def set_password(self, password):
@@ -32,19 +32,35 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
 
 
-class Task(db.Model):
-    __tablename__ = "tasks"
+class Group(db.Model):
+    __tablename__ = "groups"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+
+    members = db.relationship(
+        "User",
+        secondary=user_groups,
+        back_populates="groups"
+    )
+
+    events = db.relationship("Event", back_populates="group")
+
+
+class Event(db.Model):
+    __tablename__ = "events"
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
-    completed = db.Column(db.Boolean, default=False)
+    start_time = db.Column(db.DateTime, nullable=False)
+    end_time = db.Column(db.DateTime, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Owner of the task
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), nullable=False)
+    group = db.relationship("Group", back_populates="events")
 
-    # Users the task is shared with
-    shared_with_users = db.relationship(
-        "User",
-        secondary=user_tasks,
-        back_populates="shared_tasks"
-    )
+    def validate(self):
+        if not self.title.strip():
+            raise ValueError("Title cannot be empty")
+        if self.end_time <= self.start_time:
+            raise ValueError("End must be after start")

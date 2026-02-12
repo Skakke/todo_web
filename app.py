@@ -1,7 +1,9 @@
-from flask import Flask, render_template,session, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash
 from config import Config
 from database import db
-import models  # IMPORTANT: ensures models are registered
+import models
+from flask_login import LoginManager, login_required, login_user, logout_user
+from models import User
 
 
 def create_app():
@@ -10,35 +12,55 @@ def create_app():
 
     db.init_app(app)
 
+    # ------------------------
+    # Login Manager Setup
+    # ------------------------
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = "login"
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return User.query.get(int(user_id))
+
+    # ------------------------
+    # Create tables
+    # ------------------------
     with app.app_context():
-        db.create_all()  # creates tables if not exist
+        db.create_all()
+
+    # ------------------------
+    # Routes
+    # ------------------------
 
     @app.route("/")
+    @login_required
     def index():
-        if "user_id" not in session:
-            flash("Please log in to view your tasks.")
-            return redirect(url_for("login"))
-        
         return render_template("index.html")
-    
+
     @app.route("/login", methods=["GET", "POST"])
     def login():
         if request.method == "POST":
             username = request.form["username"]
             password = request.form["password"]
 
-            user = models.User.query.filter_by(username=username).first()
+            user = User.query.filter_by(username=username).first()
+
             if user and user.check_password(password):
-                session["user_id"] = user.id
+                login_user(user)   # ✅ Correct way
                 flash("Logged in successfully!")
                 return redirect(url_for("index"))
             else:
                 flash("Invalid username or password.")
-        
-        return render_template("login.html")
-    
-    
 
+        return render_template("login.html")
+
+    @app.route("/logout")
+    @login_required
+    def logout():
+        logout_user()
+        flash("Logged out.")
+        return redirect(url_for("login"))
 
     return app
 

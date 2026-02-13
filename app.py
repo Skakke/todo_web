@@ -1,9 +1,9 @@
-from flask import Flask, render_template, redirect, url_for, request, flash
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from config import Config
 from database import db
 import models
-from flask_login import LoginManager, login_required, login_user, logout_user
-from models import User
+from flask_login import LoginManager, login_required, login_user, logout_user, current_user
+from models import User, Event
 
 
 def create_app():
@@ -18,6 +18,12 @@ def create_app():
     login_manager = LoginManager()
     login_manager.init_app(app)
     login_manager.login_view = "login"
+
+    @login_manager.unauthorized_handler
+    def unauthorized():
+        if request.path.startswith("/api/"):
+            return jsonify({"error": "Unauthorized"}), 401
+        return redirect(url_for("login"))
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -62,7 +68,40 @@ def create_app():
         flash("Logged out.")
         return redirect(url_for("login"))
 
+
+    @app.route("/api/events", methods=["POST"])
+    
+    def get_events():
+
+        data = request.json
+        group_ids = data.get("group_ids", [])
+
+        # convert to int
+        group_ids = [int(gid) for gid in group_ids]
+
+        # groups user belongs to
+        allowed_groups = [link.group_id for link in current_user.group_links]
+
+        valid_groups = [gid for gid in group_ids if gid in allowed_groups]
+
+        if not valid_groups:
+            return jsonify([])
+
+        events = Event.query.filter(Event.group_id.in_(valid_groups)).all()
+
+        return jsonify([
+            {
+                "id": e.id,
+                "title": e.title,
+                "start": e.start_time.isoformat(),
+                "end": e.end_time.isoformat()
+            }
+            for e in events
+    ])
+
     return app
+
+    
 
 
 

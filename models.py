@@ -4,13 +4,17 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
 
-# Many-to-many user <-> group
-user_groups = db.Table(
-    "user_groups",
-    db.Column("user_id", db.Integer, db.ForeignKey("users.id"), primary_key=True),
-    db.Column("group_id", db.Integer, db.ForeignKey("groups.id"), primary_key=True),
-)
+class UserGroup(db.Model):
+    __tablename__ = "user_groups"
 
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey("groups.id"), primary_key=True)
+
+    role = db.Column(db.String(20), nullable=False, default="member")
+    # allowed: "admin", "member"
+
+    user = db.relationship("User", back_populates="group_links")
+    group = db.relationship("Group", back_populates="member_links")
 
 class User(db.Model, UserMixin):
     __tablename__ = "users"
@@ -19,17 +23,20 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
 
-    groups = db.relationship(
-        "Group",
-        secondary=user_groups,
-        back_populates="members"
-    )
+    # Global system admin
+    is_admin = db.Column(db.Boolean, default=False)
+
+    group_links = db.relationship("UserGroup", back_populates="user")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def is_group_admin(self, group_id):
+        link = next((g for g in self.group_links if g.group_id == group_id), None)
+        return link and link.role == "admin"
 
 
 class Group(db.Model):
@@ -38,12 +45,7 @@ class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
 
-    members = db.relationship(
-        "User",
-        secondary=user_groups,
-        back_populates="groups"
-    )
-
+    member_links = db.relationship("UserGroup", back_populates="group")
     events = db.relationship("Event", back_populates="group")
 
 

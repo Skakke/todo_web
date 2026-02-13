@@ -1,0 +1,135 @@
+/* =====================================================
+   GLOBAL TYPOGRAPHY
+===================================================== */
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f5f7fa;
+    color: #1f2933;
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Smooth transitions for major UI blocks */
+#calendar,
+.card,
+.navbar {
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* =====================================================
+   CALENDAR – LIGHT MODE
+===================================================== */
+
+#calendar {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* Toolbar */
+.fc-toolbar-title {
+    font-weight: 600;
+    font-size: 1.4rem;
+}
+
+/* Buttons */
+.fc-button {
+    border-radius: 8px !important;
+    padding: 0.4rem 0.9rem !important;
+    font-weight: 500;
+}
+
+/* Softere grid */
+.fc-theme-standard td,
+.fc-theme-standard th {
+    border-color: #e8edf2;
+}
+
+/* Day hover */
+.fc-daygrid-day {
+    transition: background 0.2s ease;
+}
+
+.fc-daygrid-day:hover {
+    background-color: #f1f4f8;
+}
+
+/* Events */
+.fc-event {
+    background-color: #3b82f6;
+    border: none;
+    border-radius: 8px;
+    padding: 2px 6px;
+    font-size: 0.85rem;
+}
+
+/* =====================================================
+   PREMIUM DARK MODE
+===================================================== */
+
+body.dark-mode {
+    background: linear-gradient(180deg, #1b1f27 0%, #161a21 100%);
+    color: #e6e8eb;
+}
+
+/* Navbar */
+body.dark-mode .navbar {
+    background-color: #1e222b !important;
+    border-bottom: 1px solid #2b313b;
+}
+
+/* Calendar container */
+body.dark-mode #calendar {
+    background-color: #232832;
+    border-radius: 18px;
+    padding: 1.2rem;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.35);
+}
+
+/* Calendar header */
+body.dark-mode .fc-toolbar {
+    margin-bottom: 1rem;
+}
+
+body.dark-mode .fc-toolbar-title {
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Grid softer */
+body.dark-mode .fc-theme-standard td,
+body.dark-mode .fc-theme-standard th {
+    border-color: #2f3542;
+}
+
+/* Day cells */
+body.dark-mode .fc-daygrid-day {
+    background-color: #232832;
+}
+
+body.dark-mode .fc-daygrid-day:hover {
+    background-color: #2c323d;
+}
+
+/* Buttons */
+body.dark-mode .fc-button {
+    background-color: #2b313b !important;
+    border: 1px solid #3a414d !important;
+    color: #e6e8eb !important;
+    border-radius: 10px !important;
+}
+
+body.dark-mode .fc-button:hover {
+    background-color: #343a46 !important;
+}
+
+/* Events */
+body.dark-mode .fc-event {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border: none;
+    border-radius: 10px;
+    font-weight: 500;
+    padding: 3px 8px;
+}

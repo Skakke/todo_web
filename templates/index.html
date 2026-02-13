@@ -1,7 +1,65 @@
-
 {% extends "base.html" %}
 
+{% block content %}
 
-{% block content%}
+<h2>Calendar</h2>
+
+<div class="mb-3">
+    {% for link in current_user.group_links %}
+    <div class="form-check form-check-inline">
+        <input class="form-check-input group-checkbox"
+               type="checkbox"
+               value="{{ link.group.id }}"
+               id="group{{ link.group.id }}"
+               checked>
+        <label class="form-check-label" for="group{{ link.group.id }}">
+            {{ link.group.name }}
+        </label>
+    </div>
+    {% endfor %}
+</div>
+
+<div id="calendar"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    function getSelectedGroups() {
+        return Array.from(document.querySelectorAll(".group-checkbox"))
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+    }
+
+    const calendar = new FullCalendar.Calendar(
+        document.getElementById("calendar"),
+        {
+            initialView: "dayGridMonth",
+            themeSystem: "bootstrap5",
+            height: 650,
+
+            events: function(fetchInfo, successCallback) {
+
+                fetch("/api/events", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        group_ids: getSelectedGroups()
+                    })
+                })
+                .then(res => res.json())
+                .then(data => successCallback(data));
+            }
+        }
+    );
+
+    document.querySelectorAll(".group-checkbox").forEach(cb => {
+        cb.addEventListener("change", function () {
+            calendar.refetchEvents();
+        });
+    });
+
+    calendar.render();
+});
+</script>
 
 {% endblock %}
